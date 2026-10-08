@@ -13,6 +13,10 @@ class AgentState(TypedDict):
     # Input
     bug_report: str
 
+    # ISO 639-1 code of the bug report's language (set by the planner). Retrieval stays in
+    # English; the analysis and final report are written in this language.
+    language: str
+
     # Planner output: sub-questions to guide retrieval
     diagnostic_questions: List[str]
 

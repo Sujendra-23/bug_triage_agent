@@ -1,0 +1,13 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The suite runs offline (EMBEDDING_BACKEND=hash) and stubs the LLM, so it needs no model download or API key.
+      - run: pip install chromadb rank-bm25 beautifulsoup4 requests py3langid langgraph langchain-anthropic langchain-core fastapi python-dotenv pytest
+      - run: python -m pytest -q
