@@ -10,6 +10,8 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from .language import detect_language, language_name
+from .remediation import (STATUS_ESCALATED, GhPullRequestOpener, RemediationConfig, RemediationResult,
+                          format_escalation, remediate)
 from .state import AgentState
 from .vectorstore import retrieve
 
@@ -71,7 +73,9 @@ Respond ONLY with a JSON array of strings. Example:
         "iterations": 0,
         "retrieved_contexts": [],
         "is_sufficient": False,
+        "validated": False,
         "report": None,
+        "remediation": None,
     }
 
 
@@ -160,7 +164,7 @@ def validator(state: AgentState) -> dict:
     # Hard stop — never loop more than 3 times
     if state["iterations"] >= 3:
         print("[VALIDATOR] Max iterations reached. Proceeding to report.")
-        return {"is_sufficient": True}
+        return {"is_sufficient": True, "validated": False}
 
     prompt = f"""You are a quality reviewer for incident analyses.
 
@@ -180,6 +184,7 @@ Respond with ONLY a JSON object: {{"sufficient": true}} or {{"sufficient": false
 
     response = llm.invoke([HumanMessage(content=prompt)])
 
+    malformed = False
     try:
         result = json.loads(response.content.strip())
         is_sufficient = result.get("sufficient", False)
@@ -188,13 +193,14 @@ Respond with ONLY a JSON object: {{"sufficient": true}} or {{"sufficient": false
         # If the model doesn't return valid JSON, treat as sufficient to avoid loops
         is_sufficient = True
         reason = ""
+        malformed = True
 
     if is_sufficient:
         print("[VALIDATOR] Analysis is sufficient. Proceeding to report generation.")
     else:
         print(f"[VALIDATOR] Analysis needs improvement: {reason}. Retrying retrieval...")
 
-    return {"is_sufficient": is_sufficient}
+    return {"is_sufficient": is_sufficient, "validated": is_sufficient and not malformed}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -250,3 +256,30 @@ Generate a structured incident report in Markdown with these exact sections
 
     print("[REPORTER] Report generated.")
     return {"report": report}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NODE 6: REMEDIATOR (optional)
+# Runs only when the caller supplied a remediation_request. Writes a patch in an isolated
+# git worktree, re-runs the failing test, and opens a draft PR only if it passes.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Swapped out in tests; the real opener pushes the branch and runs `gh pr create --draft`.
+pull_request_opener = GhPullRequestOpener()
+
+
+def remediator(state: AgentState) -> dict:
+    print("\n[REMEDIATOR] Attempting auto-remediation...")
+    cfg = RemediationConfig.from_dict(state["remediation_request"])
+
+    if not state.get("validated"):
+        # The iteration cap forced the report through; do not patch code on a root cause nobody accepted.
+        reason = "the root-cause analysis was never validated (iteration cap reached), so no patch was attempted"
+        result = RemediationResult(STATUS_ESCALATED, reason)
+        result.escalation = format_escalation(state.get("report") or "", reason, "", [], cfg)
+        print(f"[REMEDIATOR] {reason}")
+        return {"remediation": result.to_dict()}
+
+    result = remediate(state.get("report") or "", state.get("analysis") or "", llm, cfg, pull_request_opener)
+    print(f"[REMEDIATOR] {result.status}: {result.reason}")
+    return {"remediation": result.to_dict()}

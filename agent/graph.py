@@ -8,7 +8,7 @@ and defines the conditional routing logic.
 from langgraph.graph import StateGraph, END
 
 from .state import AgentState
-from .nodes import planner, retriever, analyzer, validator, reporter
+from .nodes import planner, retriever, analyzer, validator, reporter, remediator
 
 
 def should_retry(state: AgentState) -> str:
@@ -24,14 +24,19 @@ def should_retry(state: AgentState) -> str:
     return "retriever"
 
 
+def after_report(state: AgentState) -> str:
+    """Remediate only when the caller asked for it; otherwise end exactly as before."""
+    return "remediator" if state.get("remediation_request") else END
+
+
 def build_graph() -> StateGraph:
     """
     Construct and compile the bug triage agent graph.
 
     Graph topology:
-        planner → retriever → analyzer → validator ──(sufficient)──► reporter → END
-                      ▲                       │
-                      └──────(insufficient)───┘
+        planner → retriever → analyzer → validator ──(sufficient)──► reporter ──► END
+                      ▲                       │                          │
+                      └──────(insufficient)───┘                          └─(remediation_request)─► remediator → END
     """
     graph = StateGraph(AgentState)
 
@@ -41,6 +46,7 @@ def build_graph() -> StateGraph:
     graph.add_node("analyzer",  analyzer)
     graph.add_node("validator", validator)
     graph.add_node("reporter",  reporter)
+    graph.add_node("remediator", remediator)
 
     # Entry point
     graph.set_entry_point("planner")
@@ -49,7 +55,7 @@ def build_graph() -> StateGraph:
     graph.add_edge("planner",   "retriever")
     graph.add_edge("retriever", "analyzer")
     graph.add_edge("analyzer",  "validator")
-    graph.add_edge("reporter",  END)
+    graph.add_edge("remediator", END)
 
     # Conditional edge — the retry loop
     graph.add_conditional_edges(
@@ -60,6 +66,8 @@ def build_graph() -> StateGraph:
             "reporter":  "reporter",    # proceed to final report
         },
     )
+
+    graph.add_conditional_edges("reporter", after_report, {"remediator": "remediator", END: END})
 
     return graph.compile()
 
