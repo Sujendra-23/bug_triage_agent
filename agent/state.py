@@ -32,5 +32,15 @@ class AgentState(TypedDict):
     # How many retrieval+analysis loops we have done (circuit breaker)
     iterations: int
 
+    # True only when the validator itself judged the analysis sufficient (not when the iteration cap forced it through).
+    validated: bool
+
     # Final structured report (produced by reporter node)
     report: Optional[str]
+
+    # Optional auto-remediation: a dict of RemediationConfig fields (repo_path, test_command, ...). When absent the
+    # graph ends at the reporter exactly as before.
+    remediation_request: Optional[dict]
+
+    # Remediator output: RemediationResult as a dict (status, branch, pr_url, attempts, escalation, ...).
+    remediation: Optional[dict]
