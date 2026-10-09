@@ -24,6 +24,7 @@ def run(bug_report: str):
 
     initial_state = {
         "bug_report": bug_report.strip(),
+        "language": "en",
         "diagnostic_questions": [],
         "retrieved_contexts": [],
         "analysis": "",

@@ -1,0 +1,160 @@
+[
+ {
+  "id": "q01",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "Handles to the in-memory store never get handed back by a scheduled task, so new requests eventually get refused",
+  "relevant": "INC-001"
+ },
+ {
+  "id": "q02",
+  "kind": "exact",
+  "lang": "en",
+  "query": "ConnectionPool max connections reached (limit=100)",
+  "relevant": "INC-001"
+ },
+ {
+  "id": "q03",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "Response times for the slowest percentile tripled right after the release that added a column",
+  "relevant": "INC-002"
+ },
+ {
+  "id": "q04",
+  "kind": "exact",
+  "lang": "en",
+  "query": "full table scan, missing composite index on user_id, created_at, status",
+  "relevant": "INC-002"
+ },
+ {
+  "id": "q05",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "Our processes keep dying every few hours, resident size creeps up from 200MB until the kernel kills them",
+  "relevant": "INC-003"
+ },
+ {
+  "id": "q06",
+  "kind": "exact",
+  "lang": "en",
+  "query": "signal handler accumulating querysets keeps model instances alive",
+  "relevant": "INC-003"
+ },
+ {
+  "id": "q07",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "People waited most of an hour for their purchase emails, the backlog on the topic kept growing",
+  "relevant": "INC-004"
+ },
+ {
+  "id": "q08",
+  "kind": "exact",
+  "lang": "en",
+  "query": "HTTP timeout raised from 2s to 30s inside the consumer",
+  "relevant": "INC-004"
+ },
+ {
+  "id": "q09",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "Slow only when traffic has been idle, then the gateway gives up before the function wakes",
+  "relevant": "INC-005"
+ },
+ {
+  "id": "q10",
+  "kind": "exact",
+  "lang": "en",
+  "query": "provisioned concurrency and 180MB model load exceeded API Gateway 15s timeout",
+  "relevant": "INC-005"
+ },
+ {
+  "id": "q11",
+  "kind": "exact",
+  "lang": "en",
+  "query": "DEADLINE_EXCEEDED on 20% of inventory requests at peak",
+  "relevant": "INC-006"
+ },
+ {
+  "id": "q12",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "creating a new channel per request adds TLS handshake overhead",
+  "relevant": "INC-006"
+ },
+ {
+  "id": "q13",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "Opening a single item page fires a flood of database round trips since the related-items feature shipped",
+  "relevant": "INC-007"
+ },
+ {
+  "id": "q14",
+  "kind": "exact",
+  "lang": "en",
+  "query": "select_related prefetch_related Django endpoint 2100ms",
+  "relevant": "INC-007"
+ },
+ {
+  "id": "q15",
+  "kind": "exact",
+  "lang": "en",
+  "query": "500 on payment endpoint, KeyError PAYMENT_GATEWAY_URL",
+  "relevant": "INC-008"
+ },
+ {
+  "id": "q16",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "new required config value missing in prod secrets, tests mocked the external call",
+  "relevant": "INC-008"
+ },
+ {
+  "id": "q17",
+  "kind": "paraphrase",
+  "lang": "en",
+  "query": "Bulk price refreshes became five times slower once searching by product name was enabled",
+  "relevant": "INC-009"
+ },
+ {
+  "id": "q18",
+  "kind": "exact",
+  "lang": "en",
+  "query": "containers OOMKilled at 512MB after image processing feature loads full resolution JPEGs",
+  "relevant": "INC-010"
+ },
+ {
+  "id": "q19",
+  "kind": "non-english",
+  "lang": "es",
+  "query": "Los procesos worker se reinician cada pocas horas y la memoria crece sin parar",
+  "retrieval_query": "worker processes restart every few hours and memory keeps growing",
+  "relevant": "INC-003"
+ },
+ {
+  "id": "q20",
+  "kind": "non-english",
+  "lang": "de",
+  "query": "Bestellbestätigungen kommen mit einer Stunde Verspätung an, der Kafka-Consumer hängt hinterher",
+  "retrieval_query": "order confirmations arrive an hour late and the Kafka consumer lags",
+  "relevant": "INC-004"
+ },
+ {
+  "id": "q21",
+  "kind": "non-english",
+  "lang": "fr",
+  "query": "Le point de terminaison de paiement renvoie des erreurs 500 après le dernier déploiement",
+  "retrieval_query": "payment endpoint returns 500 errors after the latest deployment",
+  "relevant": "INC-008"
+ },
+ {
+  "id": "q22",
+  "kind": "non-english",
+  "lang": "pt",
+  "query": "A latência das consultas ao banco de dados aumentou depois da migração do esquema",
+  "retrieval_query": "database query latency increased after the schema migration",
+  "relevant": "INC-002"
+ }
+]

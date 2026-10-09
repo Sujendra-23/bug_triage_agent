@@ -9,11 +9,23 @@ import json
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 
+from .language import detect_language, language_name
 from .state import AgentState
 from .vectorstore import retrieve
 
 # Shared LLM instance — all nodes use the same model
 llm = ChatAnthropic(model="claude-sonnet-4-6", max_tokens=2048, temperature=0)
+
+
+def _language_rule(state: AgentState) -> str:
+    """Instruction appended to the analyzer and reporter prompts. Empty for English."""
+    code = state.get("language") or "en"
+    if code == "en":
+        return ""
+    return (
+        f"\nWrite your entire response in {language_name(code)}. Keep code, log lines, "
+        "identifiers and URLs exactly as they are."
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -29,10 +41,15 @@ def planner(state: AgentState) -> dict:
     """
     print("\n[PLANNER] Generating diagnostic questions...")
 
+    language = detect_language(state["bug_report"])
+    print(f"[PLANNER] Detected language: {language_name(language)} ({language})")
+
     prompt = f"""You are a senior software engineer specializing in incident analysis.
 
 Given this bug report, generate exactly 4 focused diagnostic questions that will help 
 identify the root cause. Each question should target a specific aspect of the failure.
+Write the questions in English even if the bug report is in another language, because
+the incident database and documentation are in English.
 
 Bug Report:
 {state["bug_report"]}
@@ -49,6 +66,7 @@ Respond ONLY with a JSON array of strings. Example:
         print(f"  Q{i}: {q}")
 
     return {
+        "language": language,
         "diagnostic_questions": questions,
         "iterations": 0,
         "retrieved_contexts": [],
@@ -115,7 +133,8 @@ Based on the bug report and the past incidents above, provide:
 4. Immediate mitigation steps
 
 Be specific and technical. Reference the past incidents directly where relevant.
-"""
+Where a retrieved item starts with "[source: URL]", cite that URL.
+{_language_rule(state)}"""
 
     response = llm.invoke([HumanMessage(content=prompt)])
     analysis = response.content.strip()
@@ -197,7 +216,8 @@ Bug Report:
 Root-Cause Analysis:
 {state["analysis"]}
 
-Generate a structured incident report in Markdown with these exact sections:
+Generate a structured incident report in Markdown with these exact sections
+(keep the "##" markers, translate the headings and the content):
 
 ## Incident Summary
 (One paragraph overview)
@@ -222,7 +242,8 @@ Generate a structured incident report in Markdown with these exact sections:
 
 ## Timeline
 (Estimated time to implement each fix)
-"""
+
+{_language_rule(state)}"""
 
     response = llm.invoke([HumanMessage(content=prompt)])
     report = response.content.strip()
