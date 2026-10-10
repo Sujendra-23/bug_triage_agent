@@ -1,5 +1,7 @@
 name: tests
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -11,3 +13,24 @@ jobs:
       # The suite runs offline (EMBEDDING_BACKEND=hash) and stubs the LLM, so it needs no model download or API key.
       - run: pip install chromadb rank-bm25 beautifulsoup4 requests py3langid langgraph langchain-anthropic langchain-core fastapi python-dotenv pytest
       - run: python -m pytest -q
+
+  # Scores retrieval with the real sentence-transformers model and fails when recall@1, recall@5 or
+  # MRR@5 drops below evals/baseline.json for vector, BM25 or hybrid retrieval.
+  retrieval-gate:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ci-not-used  # the agent package builds its LLM client at import time; no call is made
+      HF_HOME: ${{ github.workspace }}/.hf-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/cache@v4
+        with:
+          path: .hf-cache
+          key: hf-all-MiniLM-L6-v2
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements.txt
+      - run: python -m evals.gate

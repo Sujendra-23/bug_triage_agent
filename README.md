@@ -82,6 +82,21 @@ Numbers from it check the harness and the fusion logic; they are not a quality m
 corpus, BM25 alone scored best (recall@5 1.00), hybrid 0.91 and vector-only 0.86. Run the command without the
 override to measure your real embedding model.
 
+### Retrieval gate in CI
+
+`python -m evals.gate` scores recall@1, recall@5 and MRR@5 for vector, BM25 and hybrid retrieval with the real
+embedding model and exits non-zero when any score falls below `evals/baseline.json` (tolerance 0.01; one eval
+question is worth about 0.045 of recall). The `retrieval-gate` job in `.github/workflows/tests.yml` runs it on every
+push and pull request and writes the comparison to the job summary.
+
+The stored baseline (`all-MiniLM-L6-v2`, 22 questions) is recall@1 0.95 hybrid, 0.95 vector and 0.91 BM25, with
+recall@5 at 1.00 for all three. recall@5 is saturated on this small corpus, so recall@1 and MRR@5 are the numbers
+that can actually move.
+
+It refuses to run on `EMBEDDING_BACKEND=hash` and refuses to compare against a baseline recorded with a different
+embedding model or question set. After an intentional change to retrieval, chunking, the model or the questions, run
+`python -m evals.gate --write-baseline` and commit the new `evals/baseline.json` with the change.
+
 ## Tests
 
 ```bash

@@ -1,0 +1,23 @@
+{
+  "embedding_backend": "sentence-transformers",
+  "embedding_model": "all-MiniLM-L6-v2",
+  "k": 5,
+  "questions": 22,
+  "scores": {
+    "hybrid": {
+      "recall@1": 0.9545,
+      "recall@k": 1.0,
+      "mrr@k": 0.9636
+    },
+    "vector": {
+      "recall@1": 0.9545,
+      "recall@k": 1.0,
+      "mrr@k": 0.9659
+    },
+    "bm25": {
+      "recall@1": 0.9091,
+      "recall@k": 1.0,
+      "mrr@k": 0.9394
+    }
+  }
+}
